@@ -1,6 +1,7 @@
-// eslint-disable-next-line no-undef
-const Faucet = artifacts.require("Faucet");
+
+
+const FaucetContract = artifacts.require("Faucet")
 
 module.exports = function (deployer) {
-  deployer.deploy(Faucet);
-};
+  deployer.deploy(FaucetContract)
+}
