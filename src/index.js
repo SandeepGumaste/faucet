@@ -1,15 +1,17 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
+import React from "react";
 import "bulma/css/bulma.min.css";
-import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
+import "./index.css";
+import App from "./App";
+import reportWebVitals from "./reportWebVitals";
 
-ReactDOM.render(
+import { createRoot } from "react-dom/client";
+const rootContainer = document.getElementById("root");
+const root = createRoot(rootContainer);
+
+root.render(
   <React.StrictMode>
     <App />
-  </React.StrictMode>,
-  document.getElementById('root')
+  </React.StrictMode>
 );
 
 // If you want to start measuring performance in your app, pass a function
