@@ -10,12 +10,18 @@ function App() {
     web3: null,
     contract: null,
   });
-  const [balance, setBalance] = useState(null);
+
+  const [balance, setBallance] = useState(null);
   const [account, setAccount] = useState(null);
+  const [shouldReload, reload] = useState(false);
+
+  const reloadEffect = useCallback(() => reload(!shouldReload), [shouldReload]);
+
   useEffect(() => {
     const loadProvider = async () => {
       const provider = await detectEthereumProvider();
       const contract = await loadContract("Faucet", provider);
+
       if (provider) {
         setWeb3Api({
           web3: new Web3(provider),
@@ -23,62 +29,82 @@ function App() {
           contract,
         });
       } else {
-        console.error("Please install Metamask");
+        console.error("Please, install Metamask.");
       }
     };
+
     loadProvider();
   }, []);
+
+  useEffect(() => {
+    const loadBalance = async () => {
+      const { contract, web3 } = web3Api;
+      const balance = await web3.eth.getBalance(contract.address);
+      setBallance(web3.utils.fromWei(balance, "ether"));
+    };
+
+    web3Api.contract && loadBalance();
+  }, [web3Api, shouldReload]);
 
   useEffect(() => {
     const getAccount = async () => {
       const accounts = await web3Api.web3.eth.getAccounts();
       setAccount(accounts[0]);
     };
-    const loadBalance = async () => {
-      const { contract, web3 } = web3Api;
-      const balance = await web3.eth.getBalance(contract.address);
-      setBalance(web3.utils.fromWei(balance, "ether"));
-    };
+
     web3Api.web3 && getAccount();
-    web3Api.contract && loadBalance();
-  }, [web3Api]);
+  }, [web3Api.web3]);
 
   const addFunds = useCallback(async () => {
-    const { contract } = web3Api;
+    const { contract, web3 } = web3Api;
     await contract.addFunds({
       from: account,
-      value: Web3.utils.toWei("1", "ether"),
+      value: web3.utils.toWei("1", "ether"),
     });
-  }, [account, web3Api]);
+
+    // window.location.reload()
+    reloadEffect();
+  }, [web3Api, account, reloadEffect]);
+
+  const withdraw = async () => {
+    const { contract, web3 } = web3Api;
+    const withdrawAmount = web3.utils.toWei("0.1", "ether");
+    await contract.withdraw(withdrawAmount, {
+      from: account,
+    });
+    reloadEffect();
+  };
 
   return (
     <>
       <div className="faucet-wrapper">
         <div className="faucet">
-          <div className="is-flex">
-            <span className="mr-2">
-              <strong>Account:</strong>
+          <div className="is-flex is-align-items-center">
+            <span>
+              <strong className="mr-2">Account: </strong>
             </span>
             {account ? (
-              <h1>{account}</h1>
+              <div>{account}</div>
             ) : (
               <button
                 className="button is-small"
-                onClick={() => {
-                  web3Api.provider.request({ method: "eth_requestAccounts" });
-                }}
+                onClick={() =>
+                  web3Api.provider.request({ method: "eth_requestAccounts" })
+                }
               >
                 Connect Wallet
               </button>
             )}
           </div>
-          <div className="balance-view is-size-2 mb-4">
+          <div className="balance-view is-size-2 my-4">
             Current Balance: <strong>{balance}</strong> ETH
           </div>
-          <button onClick={addFunds} className="button mr-2 is-link">
+          <button onClick={addFunds} className="button is-link mr-2">
             Donate 1eth
           </button>
-          <button className="button is-primary">Withdraw</button>
+          <button onClick={withdraw} className="button is-primary">
+            Withdraw
+          </button>
         </div>
       </div>
     </>
